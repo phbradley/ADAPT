@@ -5,6 +5,11 @@
 This repository contains Python code implementing the ADAPT antigen-receptor design
 pipeline. This pipeline is described in the bioRxiv preprint
 
+"Targeting peptide–major histocompatibility complexes with designed T cell receptors and antibodies"
+
+Amir Motmaen, Kevin M. Jude, Nan Wang, Anastasia Minervina, Kirsten Thompson, David Feldman, Mauriz A. Lichtenstein, Abishai Ebenezer, Colin Correnti, Paul G. Thomas, K. Christopher Garcia, David Baker*, Philip Bradley* [*- corresponding authors]
+
+
 [insert link]
 
 ## here's the abstract
@@ -17,6 +22,9 @@ We validated the ADAPT pipeline by designing and characterizing TCRs and antibod
 Cryogenic electron microscopy structures of two designed antibodies bound to their respective pMHC targets demonstrate atomic-level accuracy at the recognition interface, supporting the robustness of our structure-based approach.
 Computationally designed TCRs and antibodies targeting pMHC complexes could enable a broad range of therapeutic applications, from cancer immunotherapy to autoimmune disease treatment, while insights gained from TCR–pMHC design advance predictive understanding of TCR specificity with implications for basic immunology and clinical diagnostics.
 
+## here's a methods overview
+
+![pipeline](_images/fig1_v11.png)
 
 # Installation
 
@@ -53,7 +61,7 @@ somewhat platform specific as it depends on your version of CUDA.
 ## telling ADAPT where to find things
 
 Once you have the network tools installed and the parameter and database files
-downloaded, you will need to edit `./config_paths.yaml` to point the ADAPT scripts
+downloaded, you will need to edit `./config_paths.json` to point the ADAPT scripts
 to the various files and environments.
 
 # running TCR design
