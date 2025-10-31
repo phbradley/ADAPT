@@ -1,6 +1,15 @@
 # ADAPT
 Antigen-receptor Design Against Peptide-MHC Targets
 
+Class I major histocompatibility complexes (MHCs), expressed on the surface of all nucleated cells, present peptides derived from intracellular proteins for surveillance by T cells.
+The precise recognition of foreign or mutated peptide–MHC (pMHC) complexes by T cell receptors (TCRs) is fundamental to immune defense against pathogens and tumors.
+Although patient-derived TCRs specific for cancer-associated antigens have been used to engineer tumor-targeting therapies, their reactivity toward self or near-self antigens is often limited by negative selection in the thymus.
+Here, we introduce a structure-based deep learning framework, ADAPT (Antigen-receptor Design Against Peptide-MHC Targets), for designing TCRs and antibodies that bind defined pMHC targets.
+We validated the ADAPT pipeline by designing and characterizing TCRs and antibodies against a diverse panel of pMHCs.
+Cryogenic electron microscopy structures of two designed antibodies bound to their respective pMHC targets demonstrate atomic-level accuracy at the recognition interface, supporting the robustness of our structure-based approach.
+Computationally designed TCRs and antibodies targeting pMHC complexes could enable a broad range of therapeutic applications, from cancer immunotherapy to autoimmune disease treatment, while insights gained from TCR–pMHC design advance predictive understanding of TCR specificity with implications for basic immunology and clinical diagnostics.
+
+
 # Installation
 
 ## the pipeline scripts
@@ -12,8 +21,9 @@ which satisfies the requirements in `requirements.txt`. We recommend that you
 do this in a virtual environment. With the environment activated you could do
 something like
 
-`pip install -r requirements.txt`
-
+```
+pip install -r requirements.txt
+```
 
 ## the NN models
 
@@ -28,8 +38,8 @@ https://github.com/dauparas/ProteinMPNN
 https://github.com/RosettaCommons/RFantibody
 
 Note that ADAPT ships with a slightly modifed version of Alphafold2, but you will
-still a compatible Python environment to run it. The installation process is somewhat
-platform specific as it depends on your version of CUDA.
+still need a compatible Python environment to run it. The installation process is
+somewhat platform specific as it depends on your version of CUDA.
 
 
 ## telling ADAPT where to find things
@@ -46,8 +56,8 @@ python design/dock_design.py \
     --pmhc_targets design_targets.tsv \
     --tcr_pdbids 1oga 5bs0 3gsn 3qdg \
     --design_cdrs 0 1 3 4 5 7 \
-		--num_designs 10 \
-		--outfile_prefix /path/to/output/run1_design_jobN
+    --num_designs 10 \
+    --outfile_prefix /path/to/output/run1_design_jobN
 
 
 ```
@@ -72,9 +82,9 @@ python design/dock_refine.py \
     --pmhc_targets design_targets.tsv \
     --max_pool_size 200 \
     --max_per_lineage 10 \
-		--num_parents 10 \
-		--num_mutations 2 \
-		--outfile_prefix /path/to/output/run1_refine_jobN
+    --num_parents 10 \
+    --num_mutations 2 \
+    --outfile_prefix /path/to/output/run1_refine_jobN
 
 
 ```
