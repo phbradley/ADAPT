@@ -1,5 +1,13 @@
 # ADAPT
-Antigen-receptor Design Against Peptide-MHC Targets
+
+## Antigen-receptor Design Against Peptide-MHC Targets
+
+This repository contains Python code implementing the ADAPT antigen-receptor design
+pipeline. This pipeline is described in the bioRxiv preprint
+
+[insert link]
+
+## The abstract of this preprint is as follows:
 
 Class I major histocompatibility complexes (MHCs), expressed on the surface of all nucleated cells, present peptides derived from intracellular proteins for surveillance by T cells.
 The precise recognition of foreign or mutated peptide–MHC (pMHC) complexes by T cell receptors (TCRs) is fundamental to immune defense against pathogens and tumors.
