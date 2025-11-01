@@ -118,9 +118,9 @@ be used for model quality ranking during refinement.
 ```
 python design/dock_design_ig.py \
     --pmhc_targets design_targets.tsv \
-		--abids 7sg5HL 7yv1HL 8cheHL 7kqlHL 4hpyHL 8bg4Aa 6vboHL 6b5rHL 7sscHL \
+    --abids 7sg5HL 7yv1HL 8cheHL 7kqlHL 4hpyHL 8bg4Aa 6vboHL 6b5rHL 7sscHL \
     --design_cdrs 0 1 3 4 5 7 \
-		--both_orientations \
+    --both_orientations \
     --num_designs 10 \
     --outfile_prefix /path/to/output/run2_design_jobN
 ```
