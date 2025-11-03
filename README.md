@@ -21,6 +21,7 @@ We validated the ADAPT pipeline by designing and characterizing TCRs and antibod
 Cryogenic electron microscopy structures of two designed antibodies bound to their respective pMHC targets demonstrate atomic-level accuracy at the recognition interface, supporting the robustness of our structure-based approach.
 Computationally designed TCRs and antibodies targeting pMHC complexes could enable a broad range of therapeutic applications, from cancer immunotherapy to autoimmune disease treatment, while insights gained from TCR–pMHC design may advance predictive understanding of TCR specificity with implications for basic immunology and clinical diagnostics.
 
+## here's a methods overview figure
 ![pipeline](_images/fig1_v11.png)
 
 # Installation
@@ -42,7 +43,7 @@ pip install -r requirements.txt
 ## the NN models
 
 We are working on a Docker file to make this process easier, but in the meantime
-it will be necessary for you to have working installations of those 3
+it will be necessary for you to have working installations of those 3 NN
 packages, which are available at the following locations:
 
 https://github.com/google-deepmind/alphafold

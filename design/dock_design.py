@@ -12,15 +12,7 @@ The script repeats the following steps '--num_designs' times:
 
 STEP 1. pick a random pmhc target from list
 
-STEP 2. pick a template tcr for that pmhc target. By default this will be a tcr that
-binds to the same MHC allele. This template contributes the following information:
-* va, ja, vb, jb (the V and J genes for the alpha and beta chains)
-* the first 3 and last 2 residues of the CDR3 loops
-
-    --tcr_pdbids <pdbid1> ... <pdbidN> will instead pick templates from the given pdbids
-
-    --allow_mhc_mismatch will expand the set of potential templates to include all
-tcrs that bind the same MHC class
+STEP 2. pick a template tcr for the list of --tcr_pdbids
 
 STEP 3. pick CDR3 loops from a random paired TCR. Mutate the first 3 and last 2 aas
 to match the template tcr from STEP 2.
@@ -40,7 +32,7 @@ first and second alphafold models.
 
 Example command line:
 
-python dock_design.py --pmhc_targets my_pmhc_targets.tsv \\
+python dock_design.py --pmhc_targets my_pmhc_targets.tsv --design_cdrs 0 1 3 4 5 7 \\
     --num_designs 10  --outfile_prefix dock_design_test1
 
 The --pmhc_targets file should have these columns:
@@ -61,17 +53,13 @@ email pbradley@fredhutch.org with questions
 
 parser.add_argument('--num_designs', type=int, required=True)
 parser.add_argument('--pmhc_targets', required=True)
-parser.add_argument('--resample', action='store_true')
 parser.add_argument('--outfile_prefix', required=True)
-parser.add_argument('--tcr_pdbids', nargs='*')
-parser.add_argument('--allow_mhc_mismatch', action='store_true')
-parser.add_argument('--design_other_cdrs', action='store_true')
-parser.add_argument('--design_cdrs', type=int, nargs='*')
-parser.add_argument('--debug', action='store_true')
-parser.add_argument('--use_pmhc_pdbfile', action='store_true')
-parser.add_argument('--use_native_dgeoms_in_round1', action='store_true')
-parser.add_argument('--use_native_dgeoms_in_round2', action='store_true')
+parser.add_argument('--tcr_pdbids', nargs='*', required=True)
+parser.add_argument('--design_cdrs', type=int, nargs='*', required=True)
+parser.add_argument('--resample', action='store_true')
 parser.add_argument('--extend_cdr2', action='store_true')
+
+# other args
 parser.add_argument('--num_mpnn_seqs', type=int)
 parser.add_argument('--weak_mpnn', action='store_true')
 parser.add_argument('--pepspec_mpnn', action='store_true')
@@ -80,17 +68,6 @@ parser.add_argument('--num_recycle', type=int, default=3)
 parser.add_argument('--random_state', type=int)
 parser.add_argument('--skip_rf_antibody', action='store_true',
                     help='dont run rf_antibody to evaluate the designs')
-
-parser.add_argument('--model_name', default='model_2_ptm_ft_binder',
-                    help='this doesnt really matter but it has to start with '
-                    '"model_2_ptm_ft"')
-
-parser.add_argument('--model_params_file',
-                    help='The default is a binder-fine-tuned model that was trained '
-                    'on structures and a new distillation set')
-#parser.add_argument('--rundir')
-#parser.add_argument('--loop_design_extra_args', default = '')
-#parser.add_argument('--random_state',type=int, default=11)
 
 args = parser.parse_args()
 
@@ -112,8 +89,8 @@ import wrapper_tools
 
 wrapper_tools.show_hostname()
 
-if args.model_params_file is None:
-    args.model_params_file = design_paths.AF2_BINDER_FT_PARAMS
+model_params_file = design_paths.DATA_DIR / 'model_2_ptm_ft_binder_20230729.pkl'
+model_name = 'model_2_ptm_ft_binder'
 
 ## hard-coded -- these control how much sequence is retained from tcr template cdr3s
 nterm_seq_stem = 3
@@ -136,13 +113,6 @@ if args.resample: # drop other design-related columns
     pmhc_targets['dd_lineage'] = [f'{args.pmhc_targets}:{x}'
                                   for x in range(pmhc_targets.shape[0])]
 
-if args.use_pmhc_pdbfile:
-    # Need pdbfile column and also pdbid column (used for tcrdock internal mapping junk)
-    # can't match any existing pdbids
-    assert 'pdbfile' in pmhc_targets.columns and 'pdbid' in pmhc_targets.columns
-    pdbids = set(pmhc_targets.pdbid)
-    assert not any(x in td2.sequtil.ternary_info.index for x in pdbids)
-    assert not any(x in td2.sequtil.new_ternary_info.index for x in pdbids)
 
 # read the big paired tcr database, this provides the random cdr3a/cdr3b pairs
 tcrs_file = design_paths.PAIRED_TCR_DB
@@ -171,11 +141,6 @@ outdir = f'{args.outfile_prefix}_tmp/'
 if not exists(outdir):
     mkdir(outdir)
 
-if args.use_pmhc_pdbfile: # add in some extra templates for af2 modeling
-    extra_pmhc_templates = wrapper_tools.setup_extra_pmhc_templates(
-        pmhcs, outdir+'pmhc_tmpl_')
-else:
-    extra_pmhc_templates = None
 
 dfl = []
 for (_,lpmhc), lcdr3 in zip(pmhcs.iterrows(), cdr3s.itertuples()):
@@ -208,21 +173,15 @@ for (_,lpmhc), lcdr3 in zip(pmhcs.iterrows(), cdr3s.itertuples()):
         ltcr = templates.loc[lpmhc.tcr_template_pdbid]
         print(cdr3alen, cdr3blen, lcdr3.cdr3a, lcdr3.cdr3b)
     else:
-        if args.tcr_pdbids: # fix this
-            templates_pdbids = set(templates.pdbid)
-            resample_pdbids = [x for x in args.tcr_pdbids if x in templates_pdbids]
-            bad_pdbids  = [x for x in args.tcr_pdbids if x not in templates_pdbids]
-            if bad_pdbids:
-                print(f'WARNING --tcr_pdbids contains bad pdbids: {bad_pdbids}!!!')
-            assert resample_pdbids, 'no valid --tcr_pdbids'
-            template_pdbid = random.choice(resample_pdbids)
-            print(f'randomly chose {template_pdbid} from {resample_pdbids}')
-            templates = templates[templates.pdbid==template_pdbid]
-        elif args.allow_mhc_mismatch: # only enforce same mhc_class
-            templates = templates[templates.mhc_class==lpmhc.mhc_class]
-        else: # require same mhc class and same mhc allele
-            templates = templates[(templates.mhc_class==lpmhc.mhc_class)&
-                                  (templates.mhc_allele.str.startswith(mhc))]
+        templates_pdbids = set(templates.pdbid)
+        resample_pdbids = [x for x in args.tcr_pdbids if x in templates_pdbids]
+        bad_pdbids  = [x for x in args.tcr_pdbids if x not in templates_pdbids]
+        if bad_pdbids:
+            print(f'WARNING --tcr_pdbids contains bad pdbids: {bad_pdbids}!!!')
+        assert resample_pdbids, 'no valid --tcr_pdbids'
+        template_pdbid = random.choice(resample_pdbids)
+        print(f'randomly chose {template_pdbid} from {resample_pdbids}')
+        templates = templates[templates.pdbid==template_pdbid]
         if templates.shape[0] == 0:
             print('ERROR no matching templates found for mhc:', mhc)
             exit(1)
@@ -245,8 +204,6 @@ for (_,lpmhc), lcdr3 in zip(pmhcs.iterrows(), cdr3s.itertuples()):
     outl['jb'] = ltcr.jb
     outl['cdr3b'] = cdr3b
     outl['tcr_template_pdbid'] = ltcr.pdbid
-    if args.use_pmhc_pdbfile:
-        outl['pmhc_template_pdbid'] = lpmhc.pdbid
     dfl.append(outl)
 
 tcrs = pd.DataFrame(dfl)
@@ -255,32 +212,10 @@ tcrs = pd.DataFrame(dfl)
 targets = td2.sequtil.setup_for_alphafold(
     tcrs, outdir, num_runs=1, use_opt_dgeoms=True, clobber=True,
     force_tcr_pdbids_column='tcr_template_pdbid',
-    force_pmhc_pdbids_column='pmhc_template_pdbid' if args.use_pmhc_pdbfile else None,
-    extra_pmhc_templates=extra_pmhc_templates,
     use_new_templates=True,
-    use_same_pmhc_dgeoms=args.use_native_dgeoms_in_round1,
 )
 
-if args.use_native_dgeoms_in_round1 and not args.use_native_dgeoms_in_round2:
-    round2_outdir = f'{args.outfile_prefix}_tmp_rnd2/'
-    makedirs(round2_outdir, exist_ok=True)
-    round2_targets = td2.sequtil.setup_for_alphafold(
-        tcrs, round2_outdir, num_runs=1, use_opt_dgeoms=True, clobber=True,
-        force_tcr_pdbids_column='tcr_template_pdbid',
-        force_pmhc_pdbids_column='pmhc_template_pdbid' if args.use_pmhc_pdbfile else None,
-        extra_pmhc_templates=extra_pmhc_templates,
-        use_new_templates=True,
-    )
-    round2_alignfiles = list(round2_targets.templates_alignfile)
 
-
-
-if args.design_other_cdrs:
-    which_cdrs = [0,1,3,4,5,7]
-elif args.design_cdrs:
-    which_cdrs = args.design_cdrs[:]
-else:
-    which_cdrs = [3,7]
 
 
 targets.rename(columns={'target_chainseq':'chainseq',
@@ -289,7 +224,7 @@ dfl = []
 for l in targets.itertuples():
     posl = []
     tdinfo = design_stats.get_row_tdinfo(l)
-    for ii in which_cdrs:
+    for ii in args.design_cdrs:
         loop = tdinfo.tcr_cdrs[ii]
         npad, cpad = (nterm_seq_stem, cterm_seq_stem) if ii in [3,7] else \
                      (0,0)
@@ -311,9 +246,8 @@ start = timer()
 targets = wrapper_tools.run_alphafold(
     targets, outprefix,
     num_recycle = args.num_recycle,
-    model_name = args.model_name,
-    model_params_file = args.model_params_file,
-    dry_run = args.debug,
+    model_name = model_name,
+    model_params_file = model_params_file,
 )
 af2_time = timer()-start
 
@@ -335,7 +269,6 @@ targets = wrapper_tools.run_mpnn(
     outprefix,
     num_mpnn_seqs=nseq,
     extend_flex='barf',
-    dry_run=args.debug,
     sort_by_strength=args.weak_mpnn,
     sort_by_peptide_probs=args.pepspec_mpnn or args.pepspec_opt_mpnn,
     pepspec_optimize=args.pepspec_opt_mpnn,
@@ -345,16 +278,13 @@ mpnn_time = timer()-start
 
 # run alphafold again
 outprefix = f'{outdir}afold2'
-if args.use_native_dgeoms_in_round1 and not args.use_native_dgeoms_in_round2:
-    targets['alignfile'] = round2_alignfiles
 
 start = timer()
 targets = wrapper_tools.run_alphafold(
     targets, outprefix,
     num_recycle=args.num_recycle,
-    model_name = args.model_name,
-    model_params_file = args.model_params_file,
-    dry_run = args.debug,
+    model_name = model_name,
+    model_params_file = model_params_file,
     ignore_identities = True, # since mpnn changed sequence...
 )
 af2_time += timer()-start
@@ -416,8 +346,8 @@ if not args.skip_rf_antibody:
     targets['pepspec_combo'] = targets.combo_score_wtd - 2*targets.pepspec_delta
 
 # write results
-targets['af2_time'] = af2_time/args.num_designs
-targets['mpnn_time'] = mpnn_time/args.num_designs
+targets['af2_time_per_design'] = af2_time/args.num_designs
+targets['mpnn_time_per_design'] = mpnn_time/args.num_designs
 
 targets = design_stats.reorient_and_rechain_models(targets)
 
