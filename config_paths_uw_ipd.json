@@ -1,0 +1,8 @@
+{
+    'DATA_DIR': '/net/databases/lab/tcr_design/adapt_data/',
+    'AF2_PYTHON': '/software/containers/mlfold.sif',
+    'MPNN_PYTHON': '/software/containers/mlfold.sif',
+    'MPNN_SCRIPT': '/software/lab/mpnn/proteinmpnn/protein_mpnn_run.py',
+    'RFAB_PYTHON': '/software/containers/SE3nv.sif',
+    'RFAB_SCRIPT': '/net/databases/antibody/software/rf_antibody/ab_predict.py',
+}

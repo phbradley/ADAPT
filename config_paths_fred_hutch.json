@@ -1,0 +1,8 @@
+{
+    'DATA_DIR': '/home/pbradley/csdat/adapt/adapt_data/',
+    'AF2_PYTHON': '/home/pbradley/anaconda2/envs/af2/bin/python',
+    'MPNN_PYTHON': '/home/pbradley/anaconda2/envs/RF2atest/bin/python',
+    'MPNN_SCRIPT': '/home/pbradley/gitrepos/ProteinMPNN/protein_mpnn_run.py',
+    'RFAB_PYTHON': '/home/pbradley/anaconda2/envs/SE3nv/bin/python',
+    'RFAB_SCRIPT': '/home/pbradley/gitrepos/rf_antibody/ab_predict.py',
+}

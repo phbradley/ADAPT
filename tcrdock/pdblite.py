@@ -5,6 +5,7 @@ import itertools as it
 from sys import exit
 from collections import Counter, OrderedDict
 import copy
+import gzip
 
 long2short_MSE = dict(**long2short, MSE='M')
 long2short_plus = dict(**long2short_MSE, DA='a', DC='c', DG='g', DT='t', SEP='s')
@@ -45,51 +46,56 @@ def load_pdb_coords(
     if force_MODEL:
         assert type(force_MODEL) is int
 
-    with open(pdbfile,'r') as data:
-        for line in data:
-            if line[:5] == 'MODEL' and not in_model:
-                model_num = int(line.split()[1])
-                in_model = (model_num == force_MODEL)
-                if in_model:
-                    print('FOUND the right MODEL:', model_num)
-            if not in_model:
-                continue
-            if line[:6] == 'ENDMDL' and in_model:
-                #print('stopping ENDMDL:', pdbfile)
-                break
-            if (line[:6] in ['ATOM  ','HETATM'] and line[17:20] != 'HOH' and
-                (ignore_altloc or line[16] in ' A1')):
-                if line[17:20] in long2short_plus:
-                    resid = line[22:27]
-                    chain = line[21]
-                    if chain not in all_resids:
-                        all_resids[chain] = []
-                        all_coords[chain] = {}
-                        all_name1s[chain] = {}
-                        chains.append(chain)
-                    if line.startswith('HETATM') and line[12:16] == ' CA ':
-                        print('WARNING: HETATM', pdbfile, line[:-1])
-                    if preserve_atom_name_whitespace:
-                        atom = line[12:16]
-                    else:
-                        atom = line[12:16].strip()
-                    if resid not in all_resids[chain]:
-                        all_resids[chain].append(resid)
-                        all_coords[chain][resid] = OrderedDict()
-                        all_name1s[chain][resid] = long2short_plus[line[17:20]]
+    if pdbfile.endswith('.gz'):
+        data = gzip.open(pdbfile, 'rt')
+    else:
+        data = open(pdbfile, 'r')
 
-                    if atom in all_coords[chain][resid]:
-                        if verbose:
-                            print('WARNING: take first xyz for atom, ignore others:',
-                                  chain, resid, atom, 'altloc:', line[16],
-                                  pdbfile)
-                    else:
-                        all_coords[chain][resid][atom] = np.array(
-                            [float(line[30:38]),float(line[38:46]), float(line[46:54])])
+    for line in data:
+        if line[:5] == 'MODEL' and not in_model:
+            model_num = int(line.split()[1])
+            in_model = (model_num == force_MODEL)
+            if in_model:
+                print('FOUND the right MODEL:', model_num)
+        if not in_model:
+            continue
+        if line[:6] == 'ENDMDL' and in_model:
+            #print('stopping ENDMDL:', pdbfile)
+            break
+        if (line[:6] in ['ATOM  ','HETATM'] and line[17:20] != 'HOH' and
+            (ignore_altloc or line[16] in ' A1')):
+            if line[17:20] in long2short_plus:
+                resid = line[22:27]
+                chain = line[21]
+                if chain not in all_resids:
+                    all_resids[chain] = []
+                    all_coords[chain] = {}
+                    all_name1s[chain] = {}
+                    chains.append(chain)
+                if line.startswith('HETATM') and line[12:16] == ' CA ':
+                    print('WARNING: HETATM', pdbfile, line[:-1])
+                if preserve_atom_name_whitespace:
+                    atom = line[12:16]
                 else:
-                    if verbose or line[12:16] == ' CA ':
-                        print('skip ATOM line:', line[:-1], pdbfile)
-                    skipped_lines = True
+                    atom = line[12:16].strip()
+                if resid not in all_resids[chain]:
+                    all_resids[chain].append(resid)
+                    all_coords[chain][resid] = OrderedDict()
+                    all_name1s[chain][resid] = long2short_plus[line[17:20]]
+
+                if atom in all_coords[chain][resid]:
+                    if verbose:
+                        print('WARNING: take first xyz for atom, ignore others:',
+                              chain, resid, atom, 'altloc:', line[16],
+                              pdbfile)
+                else:
+                    all_coords[chain][resid][atom] = np.array(
+                        [float(line[30:38]),float(line[38:46]), float(line[46:54])])
+            else:
+                if verbose or line[12:16] == ' CA ':
+                    print('skip ATOM line:', line[:-1], pdbfile)
+                skipped_lines = True
+    data.close()
 
     # possibly subset to residues with CA
     if preserve_atom_name_whitespace:
@@ -217,6 +223,7 @@ def save_pdb_coords(
         assert len(bfactors) == num_atoms
     for ind, (cr, name1) in enumerate(zip(resids, sequence)):
         (chain,resid) = cr
+        assert len(chain) == 1 # could fail if we read from cif file
         name3 = short_to_long_plus[name1]
         if chain != last_chain and last_chain is not None:
             out.write('TER\n')
@@ -570,10 +577,14 @@ def pose_from_cif(
         require_bb=True,
         require_CA=True,
         use_author_chains=False,
+        verbose=False,
 ):
     #ATOM   1    N N   . GLU A 1 4   ? -62.685  20.483 -39.874 1.000 111.067 ? 3   GLU AAA N   1
 
-    data = open(fname,'r')
+    if fname.endswith('.gz'):
+        data = gzip.open(fname, 'rt')
+    else:
+        data = open(fname,'r')
 
     atom_fields = []
 
@@ -582,8 +593,10 @@ def pose_from_cif(
     name1s = {}
 
     achain2chain = {} # debug
+    warned_chains = set() # debug
 
     for line in data:
+        assert type(line) is str
         if line.startswith('_atom_site.'):
             atom_fields.append(line.strip()[11:])
             #print('atom_field:', atom_fields[-1])
@@ -603,19 +616,28 @@ def pose_from_cif(
                 continue
             if len(resname) == 2 and resname[0] == 'D':
                 atom_name = atom_name.replace('"','')
+            resnum = info['label_seq_id']
+            if resnum.isdigit():
+                resnum = int(resnum)
+            else:
+                if verbose:
+                    print(f'SKIP warning: bad cif resnum: {resnum} (ie label_seq_id)')
+                continue # skip this residue!
+                #resnum = -1
             chain = info['label_asym_id']
             if use_author_chains:
                 achain = info['auth_asym_id']
-                if achain in achain2chain:
-                    assert achain2chain[achain] == chain
-                else:
-                    achain2chain[achain] = chain
-                chain = achain[0]
+                if (achain in achain2chain and achain2chain[achain][0] != chain[0] and
+                    verbose):
+                    print('warning: author-chain-map mismatch: ',
+                          achain, achain2chain[achain], '!=', chain)
+                achain2chain[achain] = chain
+                chain = achain#[0]
+                
             chain_number_maybe = info['label_entity_id']
             insert = info['pdbx_PDB_ins_code']
             xyz = np.array([float(info['Cartn_'+x]) for x in 'xyz'])
 
-            resnum = int(info['label_seq_id'])
 
             if insert in ['.','?']:
                 resid = f'{resnum:4d} '
@@ -632,7 +654,10 @@ def pose_from_cif(
                 atom_name = lpad+atom_name+' '*(4-len(lpad+atom_name))
             assert len(atom_name) == 4
 
-            assert len(chain) == 1
+            # do we really need this?? if we are going to write a PDB file, I guess...
+            if len(chain) != 1 and verbose and chain not in warned_chains:
+                print(f'chain {chain} has length != 1')
+                warned_chains.add(chain)
 
             resid = (chain, resid)
             if resid not in resids:
@@ -641,8 +666,9 @@ def pose_from_cif(
                 name1s[resid] = long2short_plus[resname]
 
             if atom_name in coords[resid]:
-                print('WARNING: take first xyz for atom, ignore others:',
-                      chain, resid, atom_name, 'altloc:', altloc, fname)
+                if verbose:
+                    print('WARNING: take first xyz for atom, ignore others:',
+                          chain, resid, atom_name, 'altloc:', altloc, fname)
             else:
                 coords[resid][atom_name] = xyz
     data.close()
@@ -658,7 +684,8 @@ def pose_from_cif(
                           (C1p not in y and name1s[x] in dna_name1s))]
 
         if bad_resids:
-            print('missing one of', require_atoms, bad_resids)
+            if verbose:
+                print('missing one of', require_atoms, bad_resids)
             for r in bad_resids:
                 resids.remove(r)
 

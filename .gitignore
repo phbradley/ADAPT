@@ -1,0 +1,13 @@
+*~
+*pyc
+__pycache__
+*.fasta.pdb
+*.phr
+*.pin
+*.pot
+*.psq
+*.ptf
+*.pto
+imgt_prot_blast_db_*fasta
+ncbi-blast*
+old

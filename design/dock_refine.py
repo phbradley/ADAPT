@@ -27,7 +27,7 @@ parameters:
 --max_per_lineage: eg 10 (will start with 1 per lineage). Lineage is defined by a
 'lineage' column in the input --poolfile
 
---num_parents: eg 10, the number of starting designs each process will select
+--num_designs: eg 10, the number of starting designs each process will select
 from the pool.
 These designs don't interact with one another, the reason to do more than 1 is just
 so that the alphafold calculations can be done together to amortize the computational
@@ -37,7 +37,7 @@ cost of model compilation.
 
 Here's the process:
 
-1. start by picking --num_parents members from the pool
+1. start by picking --num_designs members from the pool
 
 2. make --num_mutations random sequence mutations to each one, with mutations
 occurring at the positions given in the 'designable_positions' column
@@ -51,7 +51,7 @@ occurring at the positions given in the 'designable_positions' column
 6. save the results
 
 7. read the new poolfile (which might have been modified by other processes in the
-meantime): do any of these new designs we made make the cut? if so, add them to
+meantime): do any of these new designs that we made make the cut? if so, add them to
 the pool subject to --max_per_lineage and --max_pool_size
 
 
@@ -59,7 +59,7 @@ the pool subject to --max_per_lineage and --max_pool_size
 Example command line:
 
 python dock_refine.py  --max_pool_size 80 \\
-    --max_per_lineage 10  --num_parents 10 \\
+    --max_per_lineage 10  --num_designs 10 \\
     --num_mutations 2  --sort_tag combo_score_wtd \\
     --poolfile /home/pbradley/csdat/tcrpepmhc/amir/run408_A0201_TLMSAMTNL_pool.tsv \\
     --outfile_prefix /home/pbradley/csdat/tcrpepmhc/amir/slurm/run408/run408_A0201_TLMSAMTNL_00228
@@ -88,7 +88,7 @@ parser.add_argument('--poolfile', required=True)
 parser.add_argument('--outfile_prefix', required=True)
 
 parser.add_argument('--num_mutations', type=int, default=2)
-parser.add_argument('--num_parents', type=int, default=10)
+parser.add_argument('--num_designs', type=int, default=10)
 parser.add_argument('--max_pool_size', type=int, default=200)
 parser.add_argument('--max_per_lineage', type=int, default=10)
 
@@ -207,10 +207,10 @@ if args.model_params_file is None:
     args.model_params_file = design_paths.AF2_BINDER_FT_PARAMS
 
 
-
+## read the poolfile
 with FileLock(args.poolfile, timeout=120, delay=0.3) as lock:
     pool = pd.read_table(args.poolfile)
-    parents = pool.sample(n=args.num_parents, replace=pool.shape[0]<args.num_parents)
+    parents = pool.sample(n=args.num_designs, replace=pool.shape[0]<args.num_designs)
 
 required_columns = 'lineage designable_positions chainseq'.split()
 required_columns.append(args.sort_tag) # need
@@ -218,11 +218,15 @@ required_columns.append(args.sort_tag) # need
 if 'alignfile' in parents.columns and all(exists(x) for x in set(parents.alignfile)):
     RUN_AF2_SETUP = False
 else:
+    print('WARNING:: no alignfile information in the poolfile, this is unexpected\n'
+          'and means that we have to re-run AF2 setup which could possibly\n'
+          'perturb the input designs')
     RUN_AF2_SETUP = True
     required_columns += 'organism mhc mhc_class peptide va ja cdr3a vb jb cdr3b'.split()
     parents['old_chainseq'] = parents.chainseq # since setup will create new
 
 
+# this is only used if we need to re-run AF2 setup
 if args.force_tcr_pdbids_column is None:
     for col in ['tcr_template_pdbid', 'tcr_pdbid']:
         if col in parents.columns:

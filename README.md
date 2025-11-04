@@ -28,7 +28,7 @@ Computationally designed TCRs and antibodies targeting pMHC complexes could enab
 
 ## the pipeline scripts
 
-The ADAPT pipeline consists of a set of scripts that call the independent
+The ADAPT pipeline consists of a set of Python scripts that call the independent
 neural network tools Alphafold2, ProteinMPNN, and (optionally for design
 ranking) RFantibody. To run the scripts, you will need to create a Python environment
 which satisfies the requirements in `requirements.txt`. We recommend that you
@@ -52,7 +52,7 @@ https://github.com/dauparas/ProteinMPNN
 
 https://github.com/RosettaCommons/RFantibody
 
-Note that ADAPT ships with a slightly modifed version of Alphafold2, but you will
+Note that ADAPT comes with a slightly modifed version of Alphafold2, but you will
 still need a compatible Python environment to run it. The installation process is
 somewhat platform specific as it depends on your version of CUDA.
 
@@ -98,14 +98,12 @@ running commands like the following:
 
 
 ```
-
 python design/dock_refine.py \
     --poolfile /path/to/output/run1_refine_pool.tsv \
     --sort_tag combo_score_wtd \
-    --pmhc_targets design_targets.tsv \
     --max_pool_size 200 \
     --max_per_lineage 10 \
-    --num_parents 10 \
+    --num_designs 10 \
     --num_mutations 2 \
     --outfile_prefix /path/to/output/run1_refine_jobN
 
@@ -125,6 +123,22 @@ python design/dock_design_ig.py \
     --num_designs 10 \
     --outfile_prefix /path/to/output/run2_design_jobN
 ```
+
+
+# running antibody refinement
+
+```
+python design/dock_refine_ig.py \
+    --poolfile /path/to/output/run2_refine_pool.tsv \
+    --sort_tag combo_score_wtd \
+    --max_pool_size 200 \
+    --max_per_lineage 10 \
+    --num_designs 10 \
+    --num_mutations 2 \
+    --outfile_prefix /path/to/output/run2_refine_jobN
+
+```
+
 
 
 # more details to come...
