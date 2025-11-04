@@ -36,8 +36,10 @@ do this in a virtual environment. With the environment activated you could do
 something like
 
 ```
+git clone https://github.com/phbradley/ADAPT.git
 cd ADAPT/
 pip install -r requirements.txt
+python download_blast.py # probably only necessary if you want to use some parsing code
 ```
 
 ## the NN models
@@ -60,8 +62,9 @@ somewhat platform specific as it depends on your version of CUDA.
 ## telling ADAPT where to find things
 
 Once you have the network tools installed and the parameter and database files
-downloaded, you will need to edit `./config_paths.json` to point the ADAPT scripts
-to the various files and environments.
+downloaded, you will need to create `./config_paths.json` to point the ADAPT scripts
+to the various files and environments. There are examples in the `ADAPT/` folder
+for Fred Hutch and UW IPD environments that may be helpful to get the idea.
 
 # running TCR design
 

@@ -12,9 +12,9 @@ blast_foldername = 'ncbi-blast-2.11.0+' # this is what should get created
 cwd = Path(getcwd())
 basedir = Path(__file__).parent
 if not samefile(cwd, basedir):
-    print('ERROR: Please run this script in the TCRdock/ directory')
+    print('ERROR: Please run this script in the ADAPT/ directory')
     print('cwd:', cwd)
-    print('TCRdock dir:', basedir)
+    print('ADAPT dir:', basedir)
     exit()
 
 def download_web_file(address):
