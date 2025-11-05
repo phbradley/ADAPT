@@ -26,7 +26,7 @@ Computationally designed TCRs and antibodies targeting pMHC complexes could enab
 
 # Installation
 
-## the pipeline scripts
+## install the pipeline scripts
 
 The ADAPT pipeline consists of a set of Python scripts that call the independent
 neural network tools Alphafold2, ProteinMPNN, and (optionally for design
@@ -42,22 +42,34 @@ pip install -r requirements.txt
 python download_blast.py # probably only necessary if you want to use some parsing code
 ```
 
-## the NN models
+## download the fine-tuned parameters and input databases
+
+The files containing the fine-tuned AF2 and RFantibody model parameters are very large,
+so they are not included in this repository. Along with some large input databases,
+they have been deposited in the Zenodo database with this doi:
+
+`10.5281/zenodo.17488258`
+
+You will need to download that data, put it somewhere that the ADAPT scripts
+can find it, and tell them where to look for it by defining the `DATA_DIR` value in
+`ADAPT/config_paths.json` (see below).
+
+## install the NN models
 
 We are working on a Docker file to make this process easier, but in the meantime
-it will be necessary for you to have working installations of those 3 NN
+it will be necessary for you to have working installations of the 3 NN
 packages, which are available at the following locations:
 
 https://github.com/google-deepmind/alphafold
 
 https://github.com/dauparas/ProteinMPNN
 
-https://github.com/RosettaCommons/RFantibody
+https://github.com/RosettaCommons/RFantibody  [optional, for design quality assessment]
 
-Note that ADAPT comes with a slightly modifed version of Alphafold2, but you will
+Note that ADAPT comes with a slightly modifed version of Alphafold2,
+(see `changes_to_alphafold.txt`) but you will
 still need a compatible Python environment to run it. The installation process is
 somewhat platform specific as it depends on your version of CUDA.
-
 
 ## telling ADAPT where to find things
 
@@ -80,7 +92,21 @@ python design/dock_design.py \
     --outfile_prefix /path/to/output/run1_design_jobN
 ```
 
-where `jobN` would vary across the different jobs, and `design_targets.tsv` specifies the pMHC targets and would look something like this:
+`--tcr_pdbids` lists the TCR framework templates to use
+
+`--design_cdrs` tells ADAPT which CDR loops to design, where the loops are numbered
+
+0 - CDR1A
+1 - CDR2A
+2 - CDR2.5A (additional variable loop between CDR2 and CDR3)
+3 - CDR3A
+4 - CDR1B
+5 - CDR2B
+6 - CDR2.5B (additional variable loop between CDR2 and CDR3)
+7 - CDR3B
+
+`jobN` in the `--outfile_prefix` would vary across the different jobs,
+and `design_targets.tsv` specifies the pMHC targets and would look something like this:
 
 ```
 organism	mhc_class	mhc	peptide
