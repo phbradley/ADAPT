@@ -96,14 +96,14 @@ python design/dock_design.py \
 
 `--design_cdrs` tells ADAPT which CDR loops to design, where the loops are numbered
 
-0 - CDR1A
-1 - CDR2A
-2 - CDR2.5A (additional variable loop between CDR2 and CDR3)
-3 - CDR3A
-4 - CDR1B
-5 - CDR2B
-6 - CDR2.5B (additional variable loop between CDR2 and CDR3)
-7 - CDR3B
+```0 = CDR1A
+1 = CDR2A
+2 = CDR2.5A (additional variable loop between CDR2 and CDR3)
+3 = CDR3A
+4 = CDR1B
+5 = CDR2B
+6 = CDR2.5B (additional variable loop between CDR2 and CDR3)
+7 = CDR3B```
 
 `jobN` in the `--outfile_prefix` would vary across the different jobs,
 and `design_targets.tsv` specifies the pMHC targets and would look something like this:
