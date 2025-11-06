@@ -117,7 +117,6 @@ human	1	A*02:01	ALYDKTKRI
 human	1	A*02:01	TLMSAMTNL
 ```
 
-
 # running TCR refinement
 
 After making several thousand initial designs, the output TSV files from those runs
@@ -172,4 +171,18 @@ python design/dock_refine_ig.py \
 
 
 
-# more details to come...
+# getting more help
+
+Running the scripts with `-h` or `--help` will print a more or less detailed
+help message, for example
+
+```
+python design/dock_refine_ig.py -h
+```
+
+
+# contact
+
+Email "pbradley at fredhutch dot org" with questions.
+
+

@@ -20,7 +20,7 @@ to match the template tcr from STEP 2.
 STEP 4. Provide this information (peptide,MHC,V/J genes, CDR3 sequences) to a
 modified alphafold TCR docking protocol
 
-STEP 5. Re-design the CDR3 loops (excluding first 3 and last 2 residues) using MPNN
+STEP 5. Re-design the CDR loops using ProteinMPNN
 
 STEP 6. Re-dock the TCR to the pMHC using the same alphafold docking protocol used
 in step 4.

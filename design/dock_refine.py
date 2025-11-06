@@ -111,14 +111,6 @@ parser.add_argument('--run_rosetta', action='store_true',
                     'is relax_combo, this is automatically done')
 parser.add_argument('--num_recycle', type=int, default=3)
 
-parser.add_argument('--model_name', default='model_2_ptm_ft_binder',
-                    help='this doesnt really matter but it has to start with '
-                    '"model_2_ptm_ft"')
-
-parser.add_argument('--model_params_file',
-                    help='The default is a binder-fine-tuned model that was trained '
-                    'on structures and a new distillation set')
-
 #parser.add_argument('--sort_descending', action='store_true')
 
 
@@ -203,8 +195,8 @@ def diversify_parents(parents, num_mutations):
 ## main
 ######################################################################################88
 
-if args.model_params_file is None:
-    args.model_params_file = design_paths.AF2_BINDER_FT_PARAMS
+model_params_file = design_paths.AF2_BINDER_FT_PARAMS
+model_name = 'model_2_ptm_ft_binder'
 
 
 ## read the poolfile
@@ -279,8 +271,8 @@ start = timer()
 targets = wrapper_tools.run_alphafold(
     targets, outprefix,
     num_recycle = args.num_recycle,
-    model_name = args.model_name,
-    model_params_file = args.model_params_file,
+    model_name = model_name,
+    model_params_file = model_params_file,
     dry_run = args.debug,
     ignore_identities = True,
 )
@@ -317,8 +309,8 @@ start = timer()
 targets = wrapper_tools.run_alphafold(
     targets, outprefix,
     num_recycle=args.num_recycle,
-    model_name = args.model_name,
-    model_params_file = args.model_params_file,
+    model_name = model_name,
+    model_params_file = model_params_file,
     dry_run = args.debug,
     ignore_identities = True,
 )
