@@ -2,13 +2,16 @@
 
 ## Antigen-receptor Design Against Peptide-MHC Targets
 
+### Some work in progress (2025-11-20)
+
 This repository contains Python code implementing the ADAPT antigen-receptor design
 pipeline. This pipeline is described in the bioRxiv preprint
 
-"Targeting peptide–major histocompatibility complexes with designed T cell receptors and antibodies"
+"Targeting peptide–MHC complexes with designed T cell receptors and antibodies"
 
 Amir Motmaen, Kevin M. Jude, Nan Wang, Anastasia Minervina, Kirsten Thompson, David Feldman, Mauriz A. Lichtenstein, Abishai Ebenezer, Colin Correnti, Paul G. Thomas, K. Christopher Garcia*, David Baker*, Philip Bradley* [*- corresponding authors]
 
+https://www.biorxiv.org/content/10.1101/2025.11.19.689381v1
 
 [insert link]
 
@@ -144,6 +147,9 @@ be used for model quality ranking during refinement.
 
 # running antibody design
 
+Running antibody design follows the same basic workflow as TCR design. The first
+step is to make many initial dock designs, using a command like the following.
+
 ```
 python design/dock_design_ig.py \
     --pmhc_targets design_targets.tsv \
@@ -154,8 +160,20 @@ python design/dock_design_ig.py \
     --outfile_prefix /path/to/output/run2_design_jobN
 ```
 
+Here `--both_orientations` tells the code to design antibodies that bind in
+both a 'forward' (IGH ~ TCRB) and 'reverse' (IGH ~ TCRA) docking orientation.
+
+The `--abids` flag provides a list of template antibody frameworks to use.
+The full list of templates is contained in a metadata file contained in
+the `antibody_frameworks_2024-01-26.zip` file on zenodo. Specifically here:
+
+`antibody_frameworks_2024-01-26/sabdab_summary_2024-01-26_abid_info.tsv`
 
 # running antibody refinement
+
+Just as for TCRs, the next step is to create a file with the top couple hundred
+designs and run parallel refinement jobs to improve those designs. The command
+is basically the same as the refinement command for TCR design.
 
 ```
 python design/dock_refine_ig.py \
@@ -168,8 +186,6 @@ python design/dock_refine_ig.py \
     --outfile_prefix /path/to/output/run2_refine_jobN
 
 ```
-
-
 
 # getting more help
 
