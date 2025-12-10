@@ -13,8 +13,6 @@ Amir Motmaen, Kevin M. Jude, Nan Wang, Anastasia Minervina, Kirsten Thompson, Da
 
 https://www.biorxiv.org/content/10.1101/2025.11.19.689381v1
 
-[insert link]
-
 ## here's the abstract
 Class I major histocompatibility complexes (MHCs), expressed on the surface of all nucleated cells, present peptides derived from intracellular proteins for surveillance by T cells.
 The precise recognition of foreign or mutated peptide–MHC (pMHC) complexes by T cell receptors (TCRs) is fundamental to immune defense against pathogens and tumors.
